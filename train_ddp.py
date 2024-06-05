@@ -9,7 +9,7 @@ from tqdm import trange
 import random
 from ebm_finetune.finetune import run_ebm_finetune_epoch
 from ebm_finetune.utils import load_model
-from ebm_finetune.loader import blender_64
+from ebm_finetune.loader import blender_64, shapenet_128
 from ebm_finetune.train_util import wandb_setup
 
 import torch 
@@ -37,7 +37,7 @@ def run_ebm_finetune(
     num_classes="",
     energy_mode=False, 
     buffer=False,
-   
+    shapenet=False
 
 ):
 
@@ -69,6 +69,7 @@ def run_ebm_finetune(
         learn_sigma=learn_sigma,
         num_classes=num_classes,
         model_type="base" if not enable_upsample else "upsample",
+        shapenet=shapenet
     )
 
     model.to(device)
@@ -96,7 +97,11 @@ def run_ebm_finetune(
         print("buffer status: ", buffer)
 
 
-    dataset = blender_64(data_dir)
+    if shapenet:
+        dataset = shapenet_128(data_dir)
+        assert uncond == True, "should be unconditional training on ShapeNet!"
+    else:
+        dataset = blender_64(data_dir)
     num_tasks = utils.get_world_size()
     global_rank = utils.get_rank()
 
@@ -218,6 +223,12 @@ def parse_args():
         help="Energy_mode",
     )
     
+    parser.add_argument(
+        "--shapenet",
+        action="store_true",
+        help="use shapenet-car dataset",
+    )
+    
     parser.add_argument("--seed", "-seed", type=int, default=0)
     parser.add_argument(
         "--cudnn_benchmark",
@@ -274,7 +285,7 @@ if __name__ == "__main__":
     isExist = os.path.exists(args.outputs_dir)
     
     if not isExist:
-        os.makedirs(args.outputs_dir)
+        os.makedirs(args.outputs_dir, exist_ok=True)
 
     isExist_ckpt = os.path.exists(args.checkpoints_dir)
     
@@ -303,5 +314,6 @@ if __name__ == "__main__":
         uncond = args.uncond,
         energy_mode = args.energy_mode,
         world_size = args.world_size,
-        dist_url = args.dist_url
+        dist_url = args.dist_url,
+        shapenet=args.shapenet
     )

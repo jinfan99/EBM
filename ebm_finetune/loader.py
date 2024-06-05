@@ -9,8 +9,10 @@ from ebm_finetune.train_util import pil_image_to_norm_tensor
 
 
 import numpy as np
-
 from torch.utils import data
+import os.path as osp
+from glob import glob
+import random 
 
 def random_resized_crop(image, shape, resize_ratio=1.0):
     """
@@ -39,9 +41,11 @@ class blender_64(data.Dataset):
                 ):
 
 
-        data =np.load(data_dir+"/data_clevr.npz",allow_pickle=True)
-        self.ims_1 = data["arr_0"]
-        self.labels_1 = np.array(data["arr_1"])
+        data =np.load(data_dir+"/clevr_training_data_128.npz",allow_pickle=True)
+        # self.ims_1 = data["arr_0"]
+        # self.labels_1 = np.array(data["arr_1"])
+        self.ims_1 = data['ims']
+        self.labels_1 = data['labels']
 
         print(f"size of the data : {self.ims_1.shape}, {self.labels_1.shape}")
             
@@ -86,7 +90,7 @@ class blender_64(data.Dataset):
 
     def __getitem__(self, index):
     
-        im_1 = Image.fromarray(self.ims_1[index])
+        im_1 = Image.fromarray(self.ims_1[index]).resize((64, 64))
         label_1 = self.labels_1[index]
      
        
@@ -110,6 +114,56 @@ class blender_64(data.Dataset):
 
 
         return f'A {self.shapes[label[0]]}'
+    
+class shapenet_128(data.Dataset):
+    def __init__(self, 
+                 data_dir="./scratch/EBM/srn_cars/",
+                 train_only=True,
+                 uncond_p=0.05
+                ):
+
+        self.img_path_list = []
+        train_sample_list = glob(osp.join(data_dir, 'cars_train', '*'))
+        print('loading images from training set...')
+        for sample_dir in train_sample_list:
+            all_img = glob(osp.join(sample_dir, 'rgb', '*.png'))
+            self.img_path_list += all_img
+        print('images from training set loaded!')
+        
+        if not train_only:  # get the directory list for all of the objects
+            val_sample_list = glob(osp.join(data_dir, 'cars_val', '*'))
+            test_sample_list = glob(osp.join(data_dir, 'cars_test', '*'))
+            
+            print('loading images from val and test set...')
+            for sample_list in [val_sample_list, test_sample_list]:
+                for sample_dir in sample_list:
+                    all_img = glob(osp.join(sample_dir, 'rgb', '*.png'))
+                    selected_img = random.sample(all_img, 50)   # only sample 50 samples, same as training set 
+                    self.img_path_list += selected_img
+            print('images from training set loaded!')
+        else:
+            print('only using images from training set')
+
+        self.uncond_p = uncond_p # 0.05
+
+
+    def __len__(self):
+        return len(self.img_path_list)
+
+    def __getitem__(self, index):
+        img = Image.open(self.img_path_list[index]).convert('RGB')
+        # img = img.resize((64, 64))
+        label = 0   # always set label to be 0
+       
+        mask = random.random() > self.uncond_p
+
+        base_tensor = pil_image_to_norm_tensor(img)
+   
+        return  th.tensor(label,dtype=th.long),th.tensor(mask, dtype=th.bool), base_tensor
+
+    def get_test_sample(self):
+
+        return None
       
 
 

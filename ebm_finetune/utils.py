@@ -28,6 +28,7 @@ def load_model(
     num_classes: str = "",
     model_type: str = "base",
     noise_schedule: str = "squaredcos_cap_v2",
+    shapenet=False
 ):
     assert model_type in MODEL_TYPES, f"Model must be one of {MODEL_TYPES}. Exiting."
     if model_type in ["base", "base-inpaint"]:
@@ -42,10 +43,11 @@ def load_model(
     options["learn_sigma"] = learn_sigma
     options["use_fp16"] = False
     options["num_classes"] = None if num_classes == "" else num_classes
-    options["dataset"] = "clevr_norel"
-    options["image_size"] =  64 
+    options["dataset"] = "shapenet" if shapenet else "clevr_norel"
+    options["image_size"] =  128 if shapenet else 64
+    # options["num_channels"] = 192 if shapenet else 128
     options["num_channels"] = 128
-    options["num_res_blocks"] = 3
+    options["num_res_blocks"] = 2
     options["energy_mode"] = energy_mode
 
     print("Using Energy Based Model?: " , energy_mode)
