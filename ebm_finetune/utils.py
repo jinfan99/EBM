@@ -145,6 +145,7 @@ def energy_sample(
     guidance_scale=4,
     device="cpu",
     prediction_respacing="100",
+    shapenet=True
 ):
     eval_diffusion = Sampler_create_gaussian_diffusion(
         steps=options["diffusion_steps"],
@@ -157,7 +158,7 @@ def energy_sample(
 
 
     # Change if you want to sample from different class
-    size = 64
+    size = 128 if shapenet else 64
     labels = th.tensor([[2]]).long()
 
 
@@ -174,7 +175,7 @@ def energy_sample(
             )
         full_batch_size = batch_size
         def model_fn(x, t, **kwargs):
-            return model(x, t, y=None,masks=None)
+            return model(x, t, y=None,masks=None, eval=True)
     else:
         model_kwargs = dict(
         y=labels.clone().detach().to(device),

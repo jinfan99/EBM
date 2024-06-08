@@ -146,7 +146,8 @@ def run_ebm_finetune(
             epoch=epoch,
             gradient_accumualation_steps=1,
             train_upsample=enable_upsample,
-            energy_mode= energy_mode
+            energy_mode= energy_mode,
+            shapenet=shapenet
         )
 
 

@@ -6,7 +6,7 @@ import PIL
 import torch as th
 import wandb
 from tqdm import tqdm
-
+from PIL import Image
 
 def save_model(
     model: th.nn.Module, checkpoints_dir: str, train_idx: int, epoch: int,ddp=True
@@ -27,10 +27,10 @@ def save_model(
     )
 
 
-def pred_to_pil(pred: th.Tensor) -> PIL.Image:
+def pred_to_pil(pred: th.Tensor):
     scaled = ((pred + 1) * 127.5).round().clamp(0, 255).to(th.uint8).cpu()
     reshaped = scaled.permute(2, 0, 3, 1).reshape([pred.shape[2], -1, 3])
-    return PIL.Image.fromarray(reshaped.numpy())
+    return Image.fromarray(reshaped.numpy())
 
 
 def pil_image_to_norm_tensor(pil_image):

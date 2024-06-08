@@ -115,6 +115,7 @@ class blender_64(data.Dataset):
 
         return f'A {self.shapes[label[0]]}'
     
+    
 class shapenet_128(data.Dataset):
     def __init__(self, 
                  data_dir="./scratch/EBM/srn_cars/",

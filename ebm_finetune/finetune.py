@@ -33,7 +33,7 @@ def base_train_step(
     """
     tokens, masks, reals = [x.to(device) for x in batch]
     
-    th.save(reals, os.path.join('/home/zjf/repo/ebm_new/tmp_out', 'out.pth'))
+    # th.save(reals, os.path.join('/home/zjf/repo/ebm_new/tmp_out', 'out.pth'))
     timesteps = th.randint(
         0, len(diffusion.betas) - 1, (reals.shape[0],), device=device
     )
@@ -124,6 +124,7 @@ def run_ebm_finetune_epoch(
     upsample_factor=4,
     image_to_upsample='low_res_face.png',
     energy_mode = False,
+    shapenet=True
 ):
     if train_upsample: train_step = upsample_train_step
     else: train_step = base_train_step
@@ -158,41 +159,42 @@ def run_ebm_finetune_epoch(
                 print(f"Sampling from model at iteration {train_idx}")
             
             
-            # if energy_mode:
-            #     sampler = utils.energy_sample
-            #     # sampler = utils.sample
-            # else:
-            #     sampler = utils.sample
+            if energy_mode:
+                sampler = utils.energy_sample
+                # sampler = utils.sample
+            else:
+                sampler = utils.sample
             
-            # samples =sampler(
-            #     uncond = uncond,
-            #     model=model,
-            #     options=options,
-            #     batch_size=sample_bs,
-            #     guidance_scale=sample_gs, 
-            #     device=device,
-            #     prediction_respacing=sample_respacing,
-            # ).detach()
-            # sample_save_path = os.path.join(outputs_dir, f"{train_idx}.png")
-            # train_util.pred_to_pil(samples).save(sample_save_path)
-            # if uncond:
-            #      if is_master:
-            #         wandb_run.log(
-            #             {
-            #                 **log,
-            #                 "iter": train_idx,
-            #                 "samples": wandb.Image(sample_save_path, caption="Unconditional"),
-            #             }
-            #         )
-            # else:
-            #     if is_master:
-            #         wandb_run.log(
-            #             {
-            #                 **log,
-            #                 "samples": wandb.Image(sample_save_path,caption=prompt["caption"]),
-            #             }
-            #      )
-            # print(f"Saved sample {sample_save_path}")
+            samples =sampler(
+                uncond = uncond,
+                model=model,
+                options=options,
+                batch_size=sample_bs,
+                guidance_scale=sample_gs, 
+                device=device,
+                prediction_respacing=sample_respacing,
+                shapenet=shapenet
+            ).detach()
+            sample_save_path = os.path.join(outputs_dir, f"{epoch}_{train_idx}.png")
+            train_util.pred_to_pil(samples).save(sample_save_path)
+            if uncond:
+                 if is_master:
+                    wandb_run.log(
+                        {
+                            **log,
+                            "iter": train_idx,
+                            "samples": wandb.Image(sample_save_path, caption="Unconditional"),
+                        }
+                    )
+            else:
+                if is_master:
+                    wandb_run.log(
+                        {
+                            **log,
+                            "samples": wandb.Image(sample_save_path,caption=prompt["caption"]),
+                        }
+                 )
+            print(f"Saved sample {sample_save_path}")
             
         if is_master and ((train_idx % 500 == 0 and train_idx > 0) or (train_idx==0 and epoch==0)):
             train_util.save_model(model, checkpoints_dir, train_idx, epoch)

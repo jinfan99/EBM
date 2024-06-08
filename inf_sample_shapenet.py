@@ -78,7 +78,7 @@ model_path1= args.ckpt_path #
 options["noise_schedule"]= "linear"
 options["learn_sigma"] = False
 options["use_fp16"] = False
-options["num_classes"] = ""  # "4,"
+options["num_classes"] = None  # "4,"
 options["dataset"] = "clevr_norel"
 options["image_size"] =   128#  128 , 3 
 options["num_channels"] = 128 #192 
@@ -147,6 +147,11 @@ print(masks)
 print(labels.shape)
 
 
+model_kwargs = dict(
+        y=None,
+        masks=None
+            )
+full_batch_size = batch_size
 
 def model_fn_t(x_t, ts, **kwargs):
     cond_eps = model1(x_t, ts,eval=True, **kwargs)
@@ -160,17 +165,7 @@ def model_fn_t(x_t, ts, **kwargs):
 
 
 def cfg_model_fn(x_t, ts, **kwargs):
-    half = x_t[:1]
-    combined = th.cat([half] * kwargs['y'].size(0), dim=0)
-    eps = model1(combined, ts,eval=True, **kwargs)
-    # eps, rest = model_out[:, :3], model_out[:, 3:]
-
-    cond_eps, uncond_eps = eps[:-1], eps[-1:]
-    # assume weights are equal to guidance scale
-    # print(cond_eps.shape,uncond_eps.shape)
-    half_eps = uncond_eps + guidance_scale*(cond_eps - uncond_eps).sum(dim=0, keepdim=True)
-    eps = th.cat([half_eps] * x_t.size(0), dim=0)
-    return eps
+    return model1(x_t, ts, y=None,masks=None, eval=True)
 
 def cfg_model_fn_noen(x_t, ts, **kwargs):
     half = x_t[:1]
@@ -230,8 +225,9 @@ la_steps = 20
 la_step_sizes = diffusion.betas * 0.035
 
 def gradient_cha(x_t, ts, **kwargs):
-    half = x_t[:1]
-    combined = th.cat([half] * kwargs['y'].size(0), dim=0)
+    # half = x_t[:1]
+    # combined = th.cat([half] * kwargs['y'].size(0), dim=0)
+    combined = x_t
     energy_norm,eps = model1(combined, ts, mala_sampler=True,**kwargs)
 
     cond_energy,uncond_energy = energy_norm[:-1], energy_norm[-1:]
@@ -284,7 +280,7 @@ for k in range(4):
         samples = diffusion.p_sample_loop(
             sampler,
             cfg_model_fn,
-            (full_batch_size, 3, 64, 64),
+            (full_batch_size, 3, 128, 128),
             device=device,
             clip_denoised=True,
             progress=True,
