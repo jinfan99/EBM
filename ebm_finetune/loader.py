@@ -119,7 +119,7 @@ class blender_64(data.Dataset):
 class shapenet_128(data.Dataset):
     def __init__(self, 
                  data_dir="./scratch/EBM/srn_cars/",
-                 train_only=True,
+                 train_only=False,
                  uncond_p=0.05
                 ):
 
