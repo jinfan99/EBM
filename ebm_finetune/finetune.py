@@ -175,6 +175,7 @@ def run_ebm_finetune_epoch(
                 prediction_respacing=sample_respacing,
                 shapenet=shapenet
             ).detach()
+
             sample_save_path = os.path.join(outputs_dir, f"{epoch}_{train_idx}.png")
             train_util.pred_to_pil(samples).save(sample_save_path)
             if uncond:
