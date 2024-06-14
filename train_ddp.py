@@ -37,7 +37,8 @@ def run_ebm_finetune(
     num_classes="",
     energy_mode=False, 
     buffer=False,
-    shapenet=False
+    shapenet=False,
+    shapenet_train_only=False
 
 ):
 
@@ -98,7 +99,7 @@ def run_ebm_finetune(
 
 
     if shapenet:
-        dataset = shapenet_128(data_dir)
+        dataset = shapenet_128(data_dir, train_only=shapenet_train_only)
         assert uncond == True, "should be unconditional training on ShapeNet!"
     else:
         dataset = blender_64(data_dir)
@@ -229,6 +230,7 @@ def parse_args():
         action="store_true",
         help="use shapenet-car dataset",
     )
+    parser.add_argument("--shapenet_train_only", action="store_true")
     
     parser.add_argument("--seed", "-seed", type=int, default=0)
     parser.add_argument(
@@ -316,5 +318,6 @@ if __name__ == "__main__":
         energy_mode = args.energy_mode,
         world_size = args.world_size,
         dist_url = args.dist_url,
-        shapenet=args.shapenet
+        shapenet=args.shapenet,
+        shapenet_train_only=args.shapenet_train_only
     )
