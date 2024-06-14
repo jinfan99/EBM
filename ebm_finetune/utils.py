@@ -145,7 +145,8 @@ def energy_sample(
     guidance_scale=4,
     device="cpu",
     prediction_respacing="100",
-    shapenet=True
+    shapenet=True,
+    progress=True
 ):
     eval_diffusion = Sampler_create_gaussian_diffusion(
         steps=options["diffusion_steps"],
@@ -200,9 +201,9 @@ def energy_sample(
         (full_batch_size, 3, size, size),  # only thing that's changed
         device=device,
         clip_denoised=True,
-        progress=False,
+        progress=progress,
         model_kwargs=model_kwargs,
-        cond_fn=None,
+        cond_fn=None
     )[:batch_size]
     
     model.train()

@@ -1,3 +1,5 @@
 checkpoints/*
 tmp_out/*
 sample_out/*
+sample_out_128/*
+model-45x500.pt
