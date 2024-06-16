@@ -1319,7 +1319,7 @@ class Energy_UNetModel_full(nn.Module):
         self.middle_block.apply(convert_module_to_f32)
         self.output_blocks.apply(convert_module_to_f32)
 
-    def forward(self, x, timesteps, y=None, masks=None, layer_idx=None,eval=False,mala_sampler=False):
+    def forward(self, x, timesteps, y=None, masks=None, layer_idx=None,eval=False,mala_sampler=False, energy_only=False):
         """
         Apply the model to an input batch.
         :param x: an [N x C x ...] Tensor of inputs.
@@ -1403,6 +1403,9 @@ class Energy_UNetModel_full(nn.Module):
         # Energy Score = ||f(x)||^2  l2 norm squared
         # energy_norm_ =  0.5 * (unet_out** 2)
         # energy_norm = energy_norm_.sum()
+        
+        if energy_only:
+            return energy_norm
 
         if mala_sampler:
             

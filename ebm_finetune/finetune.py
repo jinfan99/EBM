@@ -123,7 +123,7 @@ def run_ebm_finetune_epoch(
     train_upsample: bool = False,
     upsample_factor=4,
     image_to_upsample='low_res_face.png',
-    energy_mode = False,
+    energy_mode = True,
     shapenet=True
 ):
     if train_upsample: train_step = upsample_train_step

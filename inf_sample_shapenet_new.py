@@ -8,14 +8,8 @@ from composable_diffusion.model_creation import (
 import argparse
 import torch
 import os
-<<<<<<< HEAD
-from glob import glob
-import os.path as osp
- 
-=======
 from torchvision.utils import make_grid, save_image
 
->>>>>>> cd5166bcc19342fefd062d5fd970563255b6d1d6
 parser = argparse.ArgumentParser()
 parser.add_argument('--ckpt_path', required=True)
 parser.add_argument('--sampler', type=str, default="mala",choices=["MALA", "HMC", "UHMC", "ULA","Rev_Diff"])
@@ -28,12 +22,8 @@ batch_size = 16
 num_batches = num_samples // batch_size
 
 sample_respacing = '100'
-<<<<<<< HEAD
-outputs_dir = "sample_out"
-=======
 outputs_dir = "sample_out_128"
 
->>>>>>> cd5166bcc19342fefd062d5fd970563255b6d1d6
 os.makedirs(outputs_dir, exist_ok=True)
 
 def main():
