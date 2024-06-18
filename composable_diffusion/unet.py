@@ -1403,6 +1403,9 @@ class Energy_UNetModel_full(nn.Module):
         # Energy Score = ||f(x)||^2  l2 norm squared
         # energy_norm_ =  0.5 * (unet_out** 2)
         # energy_norm = energy_norm_.sum()
+        # print('timestep: ', timesteps)
+        # print('energy: ', energy_norm)
+        # print('-'*20)
         
         if energy_only:
             return energy_norm

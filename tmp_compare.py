@@ -36,8 +36,8 @@ def main():
     options["noise_schedule"]= "squaredcos_cap_v2"
     options["learn_sigma"] = False
     options["use_fp16"] = False
-    options["num_classes"] = None  # "4,"
-    options["dataset"] = "shapenet"
+    options["num_classes"] = ""  # "4,"
+    options["dataset"] = "clevr_norel"
     options["image_size"] =   128#  128 , 3 
     options["num_channels"] = 128 #192 
     options["num_res_blocks"] = 2 #2

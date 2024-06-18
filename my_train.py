@@ -36,7 +36,8 @@ def run_distillation(
     energy_mode = False,
     shapenet=True,
     # shapenet_train_only=args.shapenet_train_only
-    teacher_ckpt_path="/home/zjf/re/EBM_new/checkpoints/Energy_object_chkpt_shapenet_alldata/model-52x500.pt"
+    teacher_ckpt_path="/home/zjf/repo/ebm_new/model-45x500.pt",
+    verbose=False
 ):
     device = torch.device("cuda")
     
@@ -58,29 +59,53 @@ def run_distillation(
     print('number of params:', n_parameters)
     
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay = 0.0)
-    early_stopper = EarlyStopper(patience=3, min_delta=10)
+    # early_stopper = EarlyStopper(patience=3, min_delta=10)
 
+    timestep_stopper = EarlyStopper(patience=10, min_delta=500, verbose=True, name='timestep stopper')
     
-    for iter_idx in range(num_iters):
-        run_ebm_finetune_iter(
-            uncond = uncond,
-            device = device,
-            model=model,
-            diffusion=diffusion,
-            options=options,
-            optimizer=optimizer,
-            sample_bs=sample_bs,
-            sample_gs=sample_gs,
-            checkpoints_dir=checkpoints_dir,
-            outputs_dir=outputs_dir,
-            log_frequency=log_frequency,
-            iter_idx=iter_idx,
-            gradient_accumualation_steps=1,
-            energy_mode= energy_mode,
-            shapenet=shapenet,
-            teacher_model=teacher_model,
-            early_stopper=early_stopper
-        )
+    curr_timestep = len(diffusion.betas) - 1 
+    timesteps = curr_timestep * torch.ones((batch_size,), device=device)
+    
+    # print('betas:', diffusion.betas)
+    batch_idx = 1
+    iter_idx = 1
+    
+    while curr_timestep != 0:
+        print('current timestep:' , curr_timestep)
+        print('current batch: ', batch_idx)
+        print('current iteration: ', iter_idx)
+        timesteps = curr_timestep * torch.ones((batch_size,), device=device, dtype=torch.int)
+        curr_energy = None
+        
+        while not timestep_stopper.early_stop(curr_energy):
+            batch_stopper = EarlyStopper(patience=3, min_delta=5, verbose=verbose, name='batch stopper')
+            # print('?????')
+            curr_energy, iter_idx = run_ebm_finetune_iter(
+                            uncond = uncond,
+                            device = device,
+                            model=model,
+                            diffusion=diffusion,
+                            timesteps=timesteps,
+                            options=options,
+                            optimizer=optimizer,
+                            sample_bs=sample_bs,
+                            sample_gs=sample_gs,
+                            checkpoints_dir=checkpoints_dir,
+                            outputs_dir=outputs_dir,
+                            log_frequency=log_frequency,
+                            batch_idx=batch_idx,
+                            iter_idx=iter_idx,
+                            gradient_accumualation_steps=1,
+                            energy_mode= energy_mode,
+                            shapenet=shapenet,
+                            teacher_model=teacher_model,
+                            early_stopper=batch_stopper,
+                            batch_size=batch_size,
+                        )
+            
+            batch_idx += 1
+            
+        curr_timestep -= 1
     
     
 
@@ -109,7 +134,7 @@ def parse_args():
     )
     
     parser.add_argument(
-        "--teacher_ckpt_path", "-teacher_ckpt", type=str, default="/home/zjf/re/EBM_new/checkpoints/Energy_object_chkpt_shapenet_alldata/model-51x500.pt"
+        "--teacher_ckpt_path", "-teacher_ckpt", type=str, default="/home/zjf/repo/ebm_new/model-45x500.pt"
     )
     
     parser.add_argument(
@@ -162,6 +187,14 @@ def parse_args():
     )
     parser.add_argument(
         "--noise_schedule",  type=str, default="squaredcos_cap_v2",choices=["squaredcos_cap_v2","linear"]
+    )
+    
+    parser.add_argument(
+        "--test_guidance_scale",
+        "-tgs",
+        type=float,
+        default=4.0,
+        help="Guidance scale used during model eval, not training.",
     )
    
     args = parser.parse_args()
@@ -248,3 +281,7 @@ def main():
         teacher_ckpt_path=args.teacher_ckpt_path
     )
     
+
+
+if __name__ == '__main__':
+    main()
